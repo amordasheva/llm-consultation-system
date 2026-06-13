@@ -1,0 +1,42 @@
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+  auth:
+    build: ./auth_service
+    env_file: ./auth_service/.env
+    ports:
+      - "8000:8000"
+
+  bot:
+    build: ./bot_service
+    env_file: ./bot_service/.env
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    command: uv run python -m app.run_bot
+
+  worker:
+    build: ./bot_service
+    env_file: ./bot_service/.env
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    command: uv run celery -A app.infra.celery_app worker --loglevel=info

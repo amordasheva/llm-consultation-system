@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.db
+project_review/
+project_review.zip
+project_final/
+project_final.zip
